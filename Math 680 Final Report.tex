@@ -120,7 +120,7 @@ As proposed in [1], we consider a two-layer minimization strategy, that is, at e
 
 \subsection*{\textbf{Outer layer}}
 For the outer layer, a penalized WLS approximation of (\ref{objfunc}) is
-\begin{equation}label{objapprox}
+\begin{equation}\label{objapprox}
 P_{Q}(\beta_{0},\boldsymbol{\beta})=l_{Q}(\beta_{0},\boldsymbol{\beta})+\lambda\sum_{j=1}^{g}(\tau\omega_{j}\|\boldsymbol{\beta}_{j}\|_{2}+\frac{1}{2}(1-\tau)\|\boldsymbol{\beta}_{j}\|_{2}^{2}),
 \end{equation}
 where
@@ -134,23 +134,23 @@ l_{Q}(\beta_{0},\boldsymbol{\beta})&=l_{Q}(\tilde{\beta_{0}},\tilde{\boldsymbol{
 where
 \begin{equation}
 \begin{split}
-\tilde{nu}_{i}=\nu_{i}(y_{i}e^{-(\rho-1)(\beta_{0}+\boldsymbol{x}_{i}\boldsymbol{\beta})}+e^{(2-\rho)(\beta_{0}+\boldsymbol{x}_{i}\boldsymbol{\beta})})\\
+\tilde{\nu}_{i}=\nu_{i}(y_{i}e^{-(\rho-1)(\beta_{0}+\boldsymbol{x}_{i}\boldsymbol{\beta})}+e^{(2-\rho)(\beta_{0}+\boldsymbol{x}_{i}\boldsymbol{\beta})})\\
 \tilde{y}_{i}=\tilde{\beta}_{0}+\boldsymbol{x}_{i}\boldsymbol{\beta}\frac{\nu_{i}}{\tilde{\nu}_{i}}(y_{i}e^{-(\rho-1)(\beta_{0}+\boldsymbol{x}_{i}\boldsymbol{\beta})}+e^{(2-\rho)(\beta_{0}+\boldsymbol{x}_{i}\boldsymbol{\beta})})
 \end{split}
 \end{equation}
 \subsection*{\textbf{Inner layer}}		
 After obtaining the approximation, we proceed to find the minimizer of (\ref{objfunc}) in the inner layer taking the advantage of majorization-minimization (MM) principle and update the coefficients of each block sequentially. Assume that $(\breve{\beta}_{0},\breve{\boldsymbol{\beta}}^{T})^{T}$ is the most recent updated estimate. It is clear that for each $j$,
-\begin{equation*}\label{mm}
+\begin{equation}\label{mm}
 \begin{split}
 &l_{Q}(\beta_{0},\boldsymbol{\beta})+\lambda(\tau\omega_{j}\|\boldsymbol{\beta}_{j}\|_{2}+\frac{1}{2}(1-\tau)\|\boldsymbol{\beta}_{j}\|_{2}^{2})\\
 &\le l_{Q}(\breve{\beta}_{0},\breve{\boldsymbol{\beta}})+\breve{U}_{j}^{T}(\boldsymbol{\beta}_{j}-\breve{\boldsymbol{\beta}}_{j})+\frac{\tilde{\gamma}_{j}}{2}(\boldsymbol{\beta}_{j}-\breve{\boldsymbol{\beta}}_{j})^{T}(\boldsymbol{\beta}_{j}-\breve{\boldsymbol{\beta}}_{j})+\lambda(\tau\omega_{j}\|\boldsymbol{\beta}_{j}\|_{2}+\frac{1}{2}(1-\tau)\|\boldsymbol{\beta}_{j}\|_{2}^{2})
 \end{split}
-\end{equation*}
-where
-\begin{equation}
-\breve{U}_{j}=U_{j}|_{\breve{\beta}_{0},\breve{\boldsymbol{\beta}}}=\frac{\partial l_{Q}(\beta_{0},\boldsymbol{\beta})}{\partial \boldsymbol{\beta}_{j}}|_{\breve{\beta}_{0},\breve{\boldsymbol{\beta}}}=-\sum_{i=1}^{n}\tilde{\nu}_{i}(\tilde{y}_{i}-\beta_{0}-\boldsymbol{x}_{i}\boldsymbol{\beta}_{j})\boldsymbol{x}_{ij}|_{\breve{\beta}_{0},\breve{\boldsymbol{\beta}}}
 \end{equation}
-and $\tilde{\gamma_{j}}$ is the greatest eigenvalue of $\tilde{H}_{j}=\frac{\partial l_{Q}(\beta_{0},\boldsymbol{\beta})}{\partial \boldsymbol{\beta}_{j}\partial \boldsymbol{\beta}_{j}^{T}}=\sum_{i=1}^{n}\tilde{\nu}_{i}\boldsymbol{x}_{ij}\boldsymbol{x}_{ij}^{T}$. We update $\breve{\boldsymbol{\beta}_{j}}$ by find the minimizer of (\ref{mm}) which can be written as
+where
+\begin{equation*}
+\breve{U}_{j}=U_{j}|_{\breve{\beta}_{0},\breve{\boldsymbol{\beta}}}=\frac{\partial l_{Q}(\beta_{0},\boldsymbol{\beta})}{\partial \boldsymbol{\beta}_{j}}|_{\breve{\beta}_{0},\breve{\boldsymbol{\beta}}}=-\sum_{i=1}^{n}\tilde{\nu}_{i}(\tilde{y}_{i}-\beta_{0}-\boldsymbol{x}_{i}\boldsymbol{\beta}_{j})\boldsymbol{x}_{ij}|_{\breve{\beta}_{0},\breve{\boldsymbol{\beta}}}
+\end{equation*}
+and $\tilde{\gamma_{j}}$ is the greatest eigenvalue of $\tilde{H}_{j}=\frac{\partial l_{Q}(\beta_{0},\boldsymbol{\beta})}{\partial \boldsymbol{\beta}_{j}\partial \boldsymbol{\beta}_{j}^{T}}=\sum_{i=1}^{n}\tilde{\nu}_{i}\boldsymbol{x}_{ij}\boldsymbol{x}_{ij}^{T}$. We update $\breve{\boldsymbol{\beta}_{j}}$ by finding the minimizer of RHS of (\ref{mm}), which can be written as
 \begin{equation*}
 \begin{split}
 \breve{\boldsymbol{\beta}}_{j}^{(new)}=\frac{(\tilde{\gamma}_{j}\breve{\boldsymbol{\beta}}_{j}-\breve{U}_{j})(1-\frac{\lambda\tau\omega_{j}}{\|\tilde{\gamma}_{j}\breve{\beta}_{j}-\breve{U}_{j}\|_{2}})_{+}}{\tilde{\gamma}_{j}-\lambda(1-\tau)}\\
@@ -161,7 +161,7 @@ where $\breve{U}_{0}=-\sum_{i=1}^{n}\tilde{\nu}_{i}(\tilde{y}_{i}-\beta_{0}-\bol
 
 To efficiently compute the solution path for a given sequence of decreasing $\lambda$ values ${\lambda_{1},\dots,\lambda_{m}}$ where $\lambda_{1}$ is the smallest $\lambda$ value that yields $\hat{\boldsymbol{\beta}}=\boldsymbol{0}$, we employ KKT conditions check into above algorithm.\\
 
-We start with finding $(\hat{\beta}_{0}^{(1)},(\hat{\boldsymbol{\beta}}^{(1)})^{T})^{T}$ corresponding to $\lambda_{1}$. $\hat{\boldsymbol{\beta}}^{(1)}=\boldsymbol{0}$ by definition, and we can therefore initiate $\tilde{\beta}_{0}^{(1)}=0$ and continue updating by above algorithm with $\breve{\boldsymbol{\beta}}$ restricted to $\boldsymbol{0}$. $\lambda_{1}$ is obtain by KKT conditions that $\lambda_{1}=\underset{1\ge j\le g}{max}{\|U_{j}(\hat{\beta}_{0}^{(1)},\hat{\boldsymbol{\beta}}^{(1)})\|_{2}/\tau\omega_{j}}$. A sequence of $\lambda$ values ${\lambda_{k}:\lambda_{1},\dots,\lambda_{m}}$ is therefore can be determined given $\lambda_{1}$.\\
+We start with finding $(\hat{\beta}_{0}^{(1)},(\hat{\boldsymbol{\beta}}^{(1)})^{T})^{T}$ corresponding to $\lambda_{1}$. $\hat{\boldsymbol{\beta}}^{(1)}=\boldsymbol{0}$ by definition, and we can therefore initiate $\tilde{\beta}_{0}^{(1)}=0$ and continue updating by above algorithm with $\breve{\boldsymbol{\beta}}$ restricted to $\boldsymbol{0}$. $\lambda_{1}$ is obtain by KKT conditions that $\lambda_{1}=\underset{1\le j\le g}{max}{\|U_{j}(\hat{\beta}_{0}^{(1)},\hat{\boldsymbol{\beta}}^{(1)})\|_{2}/\tau\omega_{j}}$. A sequence of $\lambda$ values ${\lambda_{k}:\lambda_{1},\dots,\lambda_{m}}$ is therefore can be determined given $\lambda_{1}$.\\
 
 For each $\lambda_{k}$, we initiate $\tilde{\beta}_{0}=\hat{\beta}_{0}^{(k-1)}$ and $\tilde{\boldsymbol{\beta}}=\hat{\boldsymbol{\beta}}^{(k-1)}$ as a warm start and adopt strong rules to check if the KKT condition
 \begin{equation}\label{kkt}
