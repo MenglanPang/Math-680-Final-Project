@@ -1,0 +1,392 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Short Sectioned Assignment
+% LaTeX Template
+% Version 1.0 (5/5/12)
+%
+% This template has been downloaded from:
+% http://www.LaTeXTemplates.com
+%
+% Original author:
+% Frits Wenneker (http://www.howtotex.com)
+%
+% License:
+% CC BY-NC-SA 3.0 (http://creativecommons.org/licenses/by-nc-sa/3.0/)
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%----------------------------------------------------------------------------------------
+%	PACKAGES AND OTHER DOCUMENT CONFIGURATIONS
+%----------------------------------------------------------------------------------------
+
+\documentclass[paper=a4, fontsize=11pt]{scrartcl} % A4 paper and 11pt font size
+%\usepackage[letterpaper,margin=1in]{geometry}
+\usepackage[english]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[backend=bibtex]{biblatex}
+\usepackage{soul}
+\usepackage[T1]{fontenc} % Use 8-bit encoding that has 256 glyphs
+\usepackage{fourier} % Use the Adobe Utopia font for the document - comment this line to return to the LaTeX default
+\usepackage[english]{babel} % English language/hyphenation
+%\usepackage[fleqn]{amsmath}
+\usepackage{amsmath}
+\usepackage{amsfonts,amsthm} % Math packages
+\usepackage{lipsum} % Used for inserting dummy 'Lorem ipsum' text into the template
+\usepackage{enumitem}
+\usepackage{sectsty} % Allows customizing section commands
+\usepackage{mathrsfs} 
+\allsectionsfont{\centering \normalfont\scshape} % Make all sections centered, the default font and small caps
+
+\usepackage{booktabs}
+\usepackage{rotating}
+\usepackage{graphicx}
+
+
+\usepackage{fancyhdr} % Custom headers and footers
+%\pagestyle{fancyplain} % Makes all pages in the document conform to the custom headers and footers
+\fancyhead{} % No page header - if you want one, create it in the same way as the footers below
+\fancyfoot[L]{} % Empty left footer
+\fancyfoot[C]{} % Empty center footer
+\fancyfoot[R]{\thepage} % Page numbering for right footer
+\renewcommand{\headrulewidth}{0pt} % Remove header underlines
+\renewcommand{\footrulewidth}{0pt} % Remove footer underlines
+\setlength{\headheight}{13.6pt} % Customize the height of the header
+
+%\numberwithin{equation}{section} % Number equations within sections (i.e. 1.1, 1.2, 2.1, 2.2 instead of 1, 2, 3, 4)
+%\numberwithin{figure}{section} % Number figures within sections (i.e. 1.1, 1.2, 2.1, 2.2 instead of 1, 2, 3, 4)
+%\numberwithin{table}{section} % Number tables within sections (i.e. 1.1, 1.2, 2.1, 2.2 instead of 1, 2, 3, 4)
+
+\setlength\parindent{0pt} % Removes all indentation from paragraphs - comment this line for an assignment with lots of text
+%\setlength{mathindent}{0pt}
+
+
+%----------------------------------------------------------------------------------------
+%	TITLE SECTION
+%----------------------------------------------------------------------------------------
+
+\newcommand{\horrule}[1]{\rule{\linewidth}{#1}} % Create horizontal rule command with 1 argument of height
+
+\title{	
+\normalfont \normalsize 
+\textsc{McGill University} \\ [25pt] % Your university, school and/or department name(s)
+\horrule{0.5pt} \\[0.4cm] % Thin top horizontal rule
+\huge Math 680 Final Project \\[1cm] Reproduce Tweedie’s Compound Poisson Model With Grouped Elastic Net\\ % The assignment title
+\horrule{2pt} \\[0.5cm] % Thick bottom horizontal rule
+\author{Prepared by: \\ Mengtian Zhang and Menglan Pang} % Your name
+}
+
+\date{\normalsize\today} % Today's date or a custom date
+
+\begin{document}
+
+\maketitle % Print the title
+
+\thispagestyle{empty}
+\newpage
+\clearpage
+\setcounter{page}{1}
+\renewcommand{\thefootnote}{\fnsymbol{footnote}}
+\setcounter{footnote}{0}
+\section*{\textbf{Introduction}}
+This project aims to implement and reproduce the algorithm for computing grouped elastic net solutions for tweedie's compound poisson model and the simulation studies proposed in [1], and to design a new simulation study that demonstrate its real-world application. We will investigate its model selection ability by comparing it with LASSO and grouped LASSO penalties.\\
+
+
+\section*{\textbf{Statistical Models}}
+Tweedie's compound poisson model takes the form of
+\begin{equation*}
+Y=\sum_{i=1}^{N}X_{i},
+\end{equation*}
+where $N$ is poisson distributed with parameter $\xi$ and $X_{i}$'s are iid $Gamma(\alpha,\gamma)$.It is often used for modeling highly right-skewed data with probability mass at zero and nonnegative support.\\
+
+The probability density function of tweedie's compound poisson model can be written as
+\begin{equation}\label{eq1}
+f(y|\mu,\rho,\phi)=a(y,\phi)e^{\frac{1}{\phi}(\frac{y\mu^{1-\rho}}{1-\rho}-\frac{\mu^{2-\rho}}{2-\rho})},
+\end{equation}
+where $\mu$ is the mean, $1<\rho<2$ is the power parameter, $\phi\in (0,\infty)$ is the dispersion parameter and we have $\xi=\frac{\mu^{2-\rho}}{\phi(2-\rho)}$,$\alpha=\frac{2-\rho}{\rho-1}$,$\gamma=\phi(\rho-1)\mu^{\rho-1}$. Our goal here is to find a generalized linear model that capture the mean, $\mu$, of $Y$. For convenience, log($\mu$) is used as link function and therefore the generalized linear model can be written as log($\mu$)=$\beta_{0}+\boldsymbol{x}\boldsymbol{\beta}$, $\boldsymbol{\beta}\in \mathbb{R}^{p}$. Substituting  $\mu$ with $e^{\beta_{0}+\boldsymbol{x}\boldsymbol{\beta}}$ in (\ref{eq1}), it is easy to obtain the negative log-likelihood function for $\beta_{0}$ and $\boldsymbol{\beta}$ given iid observations ${y_{i},x_{i}}_{i=1}^{n}$,
+\begin{equation}\label{loglike}
+l(\beta_{0},\boldsymbol{\beta})=\sum_{i=1}^{n}\nu_{i}(\frac{y_{i}e^{-(\rho-1)(\beta_{0}+\boldsymbol{x}_{i}\boldsymbol{\beta})}}{1-\rho}-\frac{e^{(2-\rho)(\beta_{0}+\boldsymbol{x}_{i}\boldsymbol{\beta})}}{2-\rho}),
+\end{equation}
+where $\nu_{i}$'s are observation weights and equals $\frac{1}{n}$ by default. \\
+
+In real applications, however, $\boldsymbol{x}$, may involve spurious predictors for which we want the coefficient estimates to be as close to zero as possible, an efficient model selection method is therefore important when we solve for estimates $\beta_{0}$ and $\boldsymbol{\beta}$. Common used model selection method is LASSO which imposes a $l_{1}$ penalty to negative log-likelihood or loss function and shrinks estimated coefficients for spurious variables to zero. In situations where "group"-like predictors, e.g. factors with multiple levels, are included in the proposed model, a better choice for such problems is grouped LASSO which partitions variables into blocks and performs block-wise model selection. Apart from the existence of spurious predictors, another issue is the non-ignorable correlation between variables. Previous studies have showed that it could be addressed by elastic net method which adds additional $l_{2}$ penalties to $l_{1}$ penalties. In the light of above discussion, we adopt grouped elastic net method combining both features to handle the problem of minimizing (\ref{loglike}).\\
+
+\section*{\textbf{Algorithms}}
+Let $\boldsymbol{\beta}\in\mathbb{R}^{p}$ be partitioned in the g blocks, i.e. $\boldsymbol{\beta}^{T}=(\boldsymbol{\beta}_{i}^{T},\dots,\boldsymbol{\beta}_{g}^{T})^{T}$ and let $\boldsymbol{\beta}_{j}^{T}\in\mathbb{R}^{p_{j}}$ with $\sum_{j=1}^{g}p_{j}=p$. The objective function we aims to minimize with respect to $\beta_{0}$ and $\boldsymbol{\beta}$ is
+\begin{equation}\label{objfunc}
+l(\beta_{0},\boldsymbol{\beta})+\lambda\sum_{j=1}^{g}(\tau\omega_{j}\|\boldsymbol{\beta}_{j}\|_{2}+\frac{1}{2}(1-\tau)\|\boldsymbol{\beta}_{j}\|_{2}^{2}),
+\end{equation}
+where $\lambda>0$ and $0<\tau\le1$ are tuning parameters, and $\omega_{j}$'s are weights for grouped LASSO penalties which by default equals $\sqrt{p_{j}}$ for $j=1,2,\dots,g$. By varying the value of parameters, we may obtain solutions under different methods. For example, if $p_{j}=1 \forall j$ and $\tau=1$, it becomes a LASSO minimization problem and if $p_{j}>1$ for some $j$ and $\tau=1$, then it is grouped LASSO. For (grouped) elastic net, $\tau$ takes value between $0$ and $1$.\\
+
+As proposed in [1], we consider a two-layer minimization strategy, that is, at each iteration, we first approximate the log-likelihood function (\ref{loglike}) using second-order Taylor expansion about the solution of ($\beta_{0},\boldsymbol{\beta}$) from the most recent iteration ($\tilde{\beta_{0}},\tilde{\boldsymbol{\beta}}$) and obtain the penalized weighted least squares (WLS) objective function $P_{Q}(\beta_{0},\boldsymbol{\beta})$ as outer layer. Inside the outer layer, we find the minimizer of $P_{Q}(\beta_{0},\boldsymbol{\beta})$ by updating $\boldsymbol{\beta}_{j}$ for $j=1,2,\dots,g$ until convergence and then update the working weight and working response $\nu_{i}$ and $y_{i}$ for $i=1,2,\dots,n$ for the next iteration. The following paragraphs elaborate this idea in detail.\\
+
+\subsection*{\textbf{Outer layer}}
+For the outer layer, a penalized WLS approximation of (\ref{objfunc}) is
+\begin{equation}label{objapprox}
+P_{Q}(\beta_{0},\boldsymbol{\beta})=l_{Q}(\beta_{0},\boldsymbol{\beta})+\lambda\sum_{j=1}^{g}(\tau\omega_{j}\|\boldsymbol{\beta}_{j}\|_{2}+\frac{1}{2}(1-\tau)\|\boldsymbol{\beta}_{j}\|_{2}^{2}),
+\end{equation}
+where
+\begin{equation*}
+\begin{split}
+l_{Q}(\beta_{0},\boldsymbol{\beta})&=l_{Q}(\tilde{\beta_{0}},\tilde{\boldsymbol{\beta}})+\sum_{i=1}^{n}{\nu_{i}(-y_{i}e^{-(\rho-1)(\beta_{0}+\boldsymbol{x}_{i}\boldsymbol{\beta})}+e^{(2-\rho)(\beta_{0}+\boldsymbol{x}_{i}\boldsymbol{\beta})})\begin{pmatrix}\boldsymbol{1}\\ \boldsymbol{x}_{i}\end{pmatrix}^{T}\begin{pmatrix}\beta_{0}-\tilde{\beta_{0}}\\ \boldsymbol{\beta}-\tilde{\boldsymbol{\beta}}\end{pmatrix}}\\
+&+\frac{1}{2}\sum_{i=1}^{n}{\nu_{i}(y_{i}e^{-(\rho-1)(\beta_{0}+\boldsymbol{x}_{i}\boldsymbol{\beta})}+e^{(2-\rho)(\beta_{0}+\boldsymbol{x}_{i}\boldsymbol{\beta})})}\\
+&=\frac{1}{2}\sum_{i=1}^{n}{\tilde{\nu}_{i}(\tilde{y}_{i}-\beta_{0}-\boldsymbol{x}_{i}\boldsymbol{\beta})^{2}}+C(\tilde{\beta}_{0},\tilde{\boldsymbol{\beta}}),
+\end{split}
+\end{equation*}
+where
+\begin{equation}
+\begin{split}
+\tilde{nu}_{i}=\nu_{i}(y_{i}e^{-(\rho-1)(\beta_{0}+\boldsymbol{x}_{i}\boldsymbol{\beta})}+e^{(2-\rho)(\beta_{0}+\boldsymbol{x}_{i}\boldsymbol{\beta})})\\
+\tilde{y}_{i}=\tilde{\beta}_{0}+\boldsymbol{x}_{i}\boldsymbol{\beta}\frac{\nu_{i}}{\tilde{\nu}_{i}}(y_{i}e^{-(\rho-1)(\beta_{0}+\boldsymbol{x}_{i}\boldsymbol{\beta})}+e^{(2-\rho)(\beta_{0}+\boldsymbol{x}_{i}\boldsymbol{\beta})})
+\end{split}
+\end{equation}
+\subsection*{\textbf{Inner layer}}		
+After obtaining the approximation, we proceed to find the minimizer of (\ref{objfunc}) in the inner layer taking the advantage of majorization-minimization (MM) principle and update the coefficients of each block sequentially. Assume that $(\breve{\beta}_{0},\breve{\boldsymbol{\beta}}^{T})^{T}$ is the most recent updated estimate. It is clear that for each $j$,
+\begin{equation*}\label{mm}
+\begin{split}
+&l_{Q}(\beta_{0},\boldsymbol{\beta})+\lambda(\tau\omega_{j}\|\boldsymbol{\beta}_{j}\|_{2}+\frac{1}{2}(1-\tau)\|\boldsymbol{\beta}_{j}\|_{2}^{2})\\
+&\le l_{Q}(\breve{\beta}_{0},\breve{\boldsymbol{\beta}})+\breve{U}_{j}^{T}(\boldsymbol{\beta}_{j}-\breve{\boldsymbol{\beta}}_{j})+\frac{\tilde{\gamma}_{j}}{2}(\boldsymbol{\beta}_{j}-\breve{\boldsymbol{\beta}}_{j})^{T}(\boldsymbol{\beta}_{j}-\breve{\boldsymbol{\beta}}_{j})+\lambda(\tau\omega_{j}\|\boldsymbol{\beta}_{j}\|_{2}+\frac{1}{2}(1-\tau)\|\boldsymbol{\beta}_{j}\|_{2}^{2})
+\end{split}
+\end{equation*}
+where
+\begin{equation}
+\breve{U}_{j}=U_{j}|_{\breve{\beta}_{0},\breve{\boldsymbol{\beta}}}=\frac{\partial l_{Q}(\beta_{0},\boldsymbol{\beta})}{\partial \boldsymbol{\beta}_{j}}|_{\breve{\beta}_{0},\breve{\boldsymbol{\beta}}}=-\sum_{i=1}^{n}\tilde{\nu}_{i}(\tilde{y}_{i}-\beta_{0}-\boldsymbol{x}_{i}\boldsymbol{\beta}_{j})\boldsymbol{x}_{ij}|_{\breve{\beta}_{0},\breve{\boldsymbol{\beta}}}
+\end{equation}
+and $\tilde{\gamma_{j}}$ is the greatest eigenvalue of $\tilde{H}_{j}=\frac{\partial l_{Q}(\beta_{0},\boldsymbol{\beta})}{\partial \boldsymbol{\beta}_{j}\partial \boldsymbol{\beta}_{j}^{T}}=\sum_{i=1}^{n}\tilde{\nu}_{i}\boldsymbol{x}_{ij}\boldsymbol{x}_{ij}^{T}$. We update $\breve{\boldsymbol{\beta}_{j}}$ by find the minimizer of (\ref{mm}) which can be written as
+\begin{equation*}
+\begin{split}
+\breve{\boldsymbol{\beta}}_{j}^{(new)}=\frac{(\tilde{\gamma}_{j}\breve{\boldsymbol{\beta}}_{j}-\breve{U}_{j})(1-\frac{\lambda\tau\omega_{j}}{\|\tilde{\gamma}_{j}\breve{\beta}_{j}-\breve{U}_{j}\|_{2}})_{+}}{\tilde{\gamma}_{j}-\lambda(1-\tau)}\\
+\breve{\beta}_{0}^{(new)}=\breve{\beta}_{0}-\tilde{\gamma}_{0}^{-1}\breve{U}_{0}
+\end{split}
+\end{equation*}
+where $\breve{U}_{0}=-\sum_{i=1}^{n}\tilde{\nu}_{i}(\tilde{y}_{i}-\beta_{0}-\boldsymbol{x}_{i}\boldsymbol{\beta}_{j})$ and $\tilde{\gamma}_{0}=\tilde{H}_{0}=\sum_{i=1}^{n}\tilde{\nu}_{i}$. We keep updating until convergence. After obtaining the minimizer of $P_{Q}(\beta_{0},\boldsymbol{\beta})$, we update the working weight and working response for the next iteration.\\
+
+To efficiently compute the solution path for a given sequence of decreasing $\lambda$ values ${\lambda_{1},\dots,\lambda_{m}}$ where $\lambda_{1}$ is the smallest $\lambda$ value that yields $\hat{\boldsymbol{\beta}}=\boldsymbol{0}$, we employ KKT conditions check into above algorithm.\\
+
+We start with finding $(\hat{\beta}_{0}^{(1)},(\hat{\boldsymbol{\beta}}^{(1)})^{T})^{T}$ corresponding to $\lambda_{1}$. $\hat{\boldsymbol{\beta}}^{(1)}=\boldsymbol{0}$ by definition, and we can therefore initiate $\tilde{\beta}_{0}^{(1)}=0$ and continue updating by above algorithm with $\breve{\boldsymbol{\beta}}$ restricted to $\boldsymbol{0}$. $\lambda_{1}$ is obtain by KKT conditions that $\lambda_{1}=\underset{1\ge j\le g}{max}{\|U_{j}(\hat{\beta}_{0}^{(1)},\hat{\boldsymbol{\beta}}^{(1)})\|_{2}/\tau\omega_{j}}$. A sequence of $\lambda$ values ${\lambda_{k}:\lambda_{1},\dots,\lambda_{m}}$ is therefore can be determined given $\lambda_{1}$.\\
+
+For each $\lambda_{k}$, we initiate $\tilde{\beta}_{0}=\hat{\beta}_{0}^{(k-1)}$ and $\tilde{\boldsymbol{\beta}}=\hat{\boldsymbol{\beta}}^{(k-1)}$ as a warm start and adopt strong rules to check if the KKT condition
+\begin{equation}\label{kkt}
+\|U_{j}(\hat{\beta}_{0}^{(k-1)},\hat{\boldsymbol{\beta}}^{(k-1)})\|_{2}<\tau\omega_{j}(2\lambda_{k}-\lambda_{k-1})
+\end{equation}
+holds for $j=1,2,\dots,g$. If (\ref{kkt}) holds, then $\boldsymbol{\beta}_{j}^{(k)}$ is very likely to be zero which can be dropped in order to save the computing time. We apply above algorithm to the reduced data set and obtain $(\tilde{\beta}_{0}^{(*)},(\tilde{\boldsymbol{\beta}}^{(*)})^{T})^{T}$ as the reduced estimated coefficients. It is then important to see if the performance of strong rules. We apply again a KKT condition ckeck, i.e. for each $j$ that satisfies (\ref{kkt}), we check if $\|U_{j}(\tilde{\beta}_{0}^{(*)},\tilde{\boldsymbol{\beta}}^{(*)})\|_{2}<\lambda_{k}\tau\omega_{j}$. If all such $j$ pass the above check, then we find the solution for $\lambda_{k}$ that $(\hat{\beta}_{0}^{(k)},(\hat{\boldsymbol{\beta}}^{(k)})^{T})^{T}=(\tilde{\beta}_{0}^{(*)},(\tilde{\boldsymbol{\beta}}^{(*)})^{T})^{T}$; if some $j$ fails to pass the test, we add $\boldsymbol{x}_{j}$ back to the reduced data set and perform the algorithm again until solution $(\hat{\beta}_{0}^{(k)},(\hat{\boldsymbol{\beta}}^{(k)})^{T})^{T}$ is found.
+
+\section*{\textbf{R Function Development and Validation}}
+Based on the algorithms described in the previous section, we developed a R function named \textit{tweedieAlgo1} to solve the grouped elastic net problem for a given $\lambda$ value. Furthermore, we also created a R function named \textit{tweedieAlgo2} to compute the whole solution path of grouped elastic net for a given vector of $\lambda$ or for a number of $\lambda$ values to be considered. We tested our functions with a single dataset. The results provided by our functions are the same as those provided by the \textbf{HDtweedie} package which is developed by the authors of the original paper. Therefore, we have validated that the functions developed by us can successfully perform, although the speed is somewhat slower than the \textbf{HDtweedie} package which was built based on Fortran. Moreover, we wrote another R function named \textit{cvtweedie} to perform the k-folds cross validation for selecting the tuning parameters $\lambda$ and $\tau$ in the Tweedie model. 
+
+
+\section*{\textbf{Simulation Studies}}
+We consider two simulation studies for this final project. For the first simulation study, we aim to reproduce the example 1 of the simulation study in the paper by Qian, Yang and Zou 2016 [1]. This simulation study is used to investigate the performance in terms of variable selection by the Tweedie model with lasso, grouped lasso, and grouped elastic net methods. However, all the covariates are artificially generated from multivariate normal distribution with mean zero and a certain covariate matrix, therefore we consider a second simulation study based on a real-life dataset in car insurance to better reflect the data structure in a real-world analysis. An additional objective of this simulation study is to evaluate the performance of these models in terms of bias and precision of each of the regression coefficients.\\
+
+\subsection*{\textbf{Simulation Study 1}}
+Three difference cases were considered in Simulation study 1.
+\begin{itemize}
+\item General simulation study design for all the three cases\\
+\end{itemize}
+
+1000 observations were generated in each run of the simulation. We followed the strategy in the paper to create the design matrix. Eight-dimensional covariates $\textbf{T}=(T_{1},...,T_{8})$ were randomly generated from a certain multivariate distributions in each of the three cases. Then, for each covariate $\textit{T}_{j} (j=1,...,8)$, we used three polynomial terms $p_{1}(T_{j})$, $p_{2}(T_{j})$, $p_{3}(T_{j})$ to produce three correlated covariates which would naturally form a block. The polynomial functions are given by: $p_{1}(x)=x$, $p_{2}=(3x^{2}-1)/6$, and $p_{2}=(5x^{3}-3x)/10$. The resulted design matrix was consisted of 24 terms. The outcome $Y$ was generated by the Tweedie model with log link function, $\rho=1.5$ and $\phi=1$ using the random generating function \textbf{rtweedie} in R [2]. The corresponding link function is described in the following subsection.\\
+
+
+The whole dataset was split into a training dataset and a testing dataset with 500 observations each. We fitted the Tweedie models with lasso, grouped lasso, and grouped elastic net models by using the training dataset to select the tuning parameters $\lambda$ and $\tau$, and evaluated the performances of these three methods by using the testing dataset.\\
+
+More specifically, the tuning parameter $\lambda$ was selected by using a five-fold cross-validations within the training dataset. The sequence of $\lambda$ was pre-specified as a grid of m=10 values that uniformly located in the log scale on [$\lambda_{10}$, $\lambda_{1}$]. The best $\lambda$ was chosen as the one that minimizes the overall negative log-likelihood. The additional tuning parameter $\tau$ in the grouped elastic net method was selected from the sequence \{0.1, 0.3,...,0.9\}.(Note, m=100, and the sequence for $\tau$ is \{0.1,0.2,...,1.0\} in the original paper and we chose a much smaller number for m and a shorter sequence for $\tau$ to reduce the computational time at the possible costs of the performance of each method.)\\
+
+To investigate the performance of the three methods, the capability of variable selection are assessed based on the blocks as well as the individual covariates. The block of the covariates is defined as active if at least one of predictors was selected within the block, and a individual covariate is defined as active if its estimated coefficient is nonzero. Therefore, four criteria were used to evaluate the variable selection when fitting the models in the testing dataset with the tuning parameters chosen from the training dataset. First, block-C: the number of correctly identified active blocks; Second, block-IC: the number of incorrectly identified active blocks; Third, coefficient-C: the number of correctly identified active coefficients; and Fourth, the number of incorrectly identified active coefficients. The simulation was repeated 50 times, and the average values of the four criteria were calculated over the 50 simulation runs.
+
+\begin{itemize}
+\item Specifications for each of the cases\\
+\end{itemize}
+
+\textit{Case 1}: \textbf{T}=$(T_{1},...,T_{8})$ was assumed to follow a multivariate normal distribution $\mathcal{N}(\mathbf{0},\Sigma_{1})$. The variance matrix $\Sigma_{1}$ is a compound symmetry correlation matrix, where  $(\Sigma_{1})_{ij}=\omega$ ($i \neq j$, and $i, j=1,...,8$), and $(\Sigma_{1})_{ij}=1$ $(i=j)$. $\omega$ was set to be 0 or 0.5. The link function is
+\begin{equation*}
+\textrm{log }\mu =0.3+\sum\limits_{j=1}^3(-1)^{(j+1)}(0.5p_{1}(T_{j})+0.2p_{2}(T_{j})+0.5p_{3}(T_{j}))
+\end{equation*}
+In this setting, there were 8 blocks and 24 predictors. The first 3 blocks and the first 9 predictors were active in the true models.\\
+
+
+\textit{Case 2}: In this case, \textbf{T} was generated based on \textbf{Z}, where \textbf{Z}=$(Z_{1},...,Z_{6})$ was assumed to follow a multivariate normal distribution $\mathcal{N}(\mathbf{0},\Sigma_{2})$. The variance matrix $\Sigma_{2}$ is a compound symmetry correlation matrix, where  $(\Sigma_{2})_{ij}=\omega$ ($i \neq j$, and $i, j=1,...,6$), and $(\Sigma_{2})_{ij}=1$ $(i=j)$. $\omega$ was set to be 0 or 0.5. Then \textbf{T} was generated by $T_{1}=Z_{1}+\varepsilon_{1}$, $T_{2}=Z_{1}+\varepsilon_{2}$, $T_{3}=Z_{1}+\varepsilon_{3}$, and $T_{j}=Z_{j-2} (j=4,...,8)$, where $\varepsilon_{1}$, $\varepsilon_{2}$, $\varepsilon_{3}$ were independent Normal(0, 0.01). The link function was the same as that of Case 1. Again in this setting, the first 3 blocks and the first 9 predictor were active among the total 8 blocks and 24 predictors. The additional feature in this case is that the three active blocks are highly correlated with each other, as $T_{1}$, $T_{2}$, and $T_{3}$ were based on the same variable $Z_{1}$.\\
+
+\textit{Case 3}: The distribution of \textbf{T} was assumed to be the same Case 1. The link function is
+\begin{equation*}
+\textrm{log }\mu =0.3+\sum\limits_{j=1}^6(-1)^{(j+1)}p_{1}(T_{j})
+\end{equation*} 
+In this scenario, the link function was used to favour the lasso method intentionally. There were again 8 blocks and 24 predictors. But only 6 blocks and 6 predictors were relevant in the true model. The first 6 blocks were active in the true models, and the predictors (1, 4, 7, 10, 13, 16) were truly active.\\
+
+\subsection*{\textbf{Simulation Study 2}}
+This simulation was based on a real-life dataset in car insurance. We found this dataset named \textbf{dataCar} in the the R package \textbf{insuranceData} [3]. It is based on one-year vehicle insurance policies taken out in 2004 or 2005 that consists of 67,856 observations. We considered 6 relevant variables in our simulation studies, i.e., vehicle value in \$10,000 dollar (continuous variable), vehicle body (categorical variable with 13 levels), vehicle age (continuous variable), gender (binary variable), area (categorical variable with 6 levels), and driver's age (categorical variables with 6 levels). The distribution of these predictors is provided in Table \ref{table1}. Each of the categorical variables were then represented by their corresponding dummy variables and these dummy variables naturally formed a block. In total, there were 6 blocks with the size of (1, 12, 1, 1, 5, 5), resulted in 25 predictors.\\
+
+\begin{table}
+\centering
+\caption{Descriptive statistics of the variables in the car insurance dataset}
+\label{table1}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+N & 67,856 & Coefficients \\ \midrule
+Vehicle Value (mean  (sd)) & 1.78 (1.21) & 0.05 \\
+Vehicle Body (\%) &  &  \\
+BUS & 48 ( 0.1) & Ref \\
+CONVT & 81 ( 0.1) & -2.14 \\
+COUPE & 780 ( 1.1) & -0.89 \\
+HBACK & 18,915 (27.9) & -1.13 \\
+HDTOP & 1,579 ( 2.3) & -0.94 \\
+MCARA & 127 ( 0.2) & -0.56 \\
+MIBUS & 717 ( 1.1) & -1.26 \\
+PANVN & 752 ( 1.1) & -0.92 \\
+RDSTR & 27 ( 0.0) & -1.22 \\
+SEDAN & 22,233 (32.8) & -1.12 \\
+STNWG & 16,261 (24.0) & -1.11 \\
+TRUCK & 1,750 ( 2.6) & -1.15 \\
+UTE & 4,586 ( 6.8) & -1.35 \\
+Vehicle Age (mean,(sd)) & 2.67 (1.07) & -0.01 \\
+Gender=M (\%) & 29,253 (43.1) & -0.01 \\
+Area (\%) &  &  \\
+A & 16,312 (24.0) & Ref \\
+B & 13,341 (19.7) & 0.10 \\
+C & 20,540 (30.3) & 0.04 \\
+D & 8,173 (12.0) & -0.09 \\
+E & 5,912 ( 8.7) & -0.01 \\
+F & 3,578 ( 5.3) & 0.11 \\
+Driver's Age (\%) &  &  \\
+1 & 5,742 ( 8.5) & Ref \\
+2 & 12,875 (19.0) & -0.20 \\
+3 & 15,767 (23.2) & -0.22 \\
+4 & 16,189 (23.9) & -0.26 \\
+5 & 10,736 (15.8) & -0.45 \\
+6 & 6,547 ( 9.6) & -0.45 \\ \bottomrule
+\end{tabular}
+\end{table}
+
+
+In order to retain the data structure and the correlation of the covariates in this real-life dataset, for each simulation run, we took all the variables as they were from the car insurance dataset and formed them as our design matrix in this simulation. In other words, there was no variation in the design matrix across different simulation runs. However, the outcome variable would be generated randomly for each observation in each simulation run. A log link function was used, i.e., $\textrm{log }\mu =\beta_{0}+\beta X$. We obtained the values for $\beta$ by fitting a logistic regression using the design matrix as predictors and the binary variable occurrence of claim as outcome to get a sensible relationship between the covariates and the claim in real life. The estimates from the logistic regression were set to be the true values for the regression coefficients in the Tweedie model. The corresponding value for each variable was provided in Table \ref{table1}. Finally, $Y$ was generated by the Tweedie model with $\rho=1.5$ and $\phi=1$ using the \textbf{rtweedie} function. In addition, we artificially generated a 10-dimensional multivariate standard normal distribution as irrelevant noise variable. \\
+
+As we have done in simulation 1, we evenly divided the whole dataset into a training dataset to obtain the optimal $\lambda$ and $\tau$ by using 5-fold cross validation, and a testing dataset to fit the three Tweedie models. The simulation was repeated for 50 times, and we obtained the average $\hat{\beta}$ over the 50 simulation runs. The bias, standard error and the root mean squared error were calculated for each of the covariates.\\
+
+
+\section*{\textbf{Results}}
+
+\subsection*{\textbf{Results of Simulation Study 1}}
+The results of the Simulation Study 1 including all the three cases are summarized in Table \ref{table2}. \\
+
+In case 1, all the three relevant blocks were selected for almost all the time by the Tweedie models, and on average 2 irrelevant blocks among 6 were selected. It is shown that the grouped lasso and grouped elastic net have better block selection results than the lasso by identifying slightly more relevant blocks and less irrelevant blocks. In terms of the individual coefficient, the grouped lasso and grouped elastic net almost always selected the 9 relevant predictors, as the estimate coefficients were nonzero once the active blocks were selected. On the other hand, lasso identified less relevant predictors (on average 6 out of 9), as some estimated coefficients of an active block may be zero. For the same reason, grouped lasso and grouped elastic net also tended to select more incorrectly identified active coefficients. These results were expected, as the link function was specified to have an explicit blockwise structure. \\
+
+In case 2, it was shown that the pattern of the results were similar to those in case 1. However, the performance of all the four criteria revealed somewhat worse than the performance in case 1. Moreover, the grouped elastic net only select slightly more relevant blocks on average compared to grouped lasso (average block-C: 2.61, and 2.5 by grouped elastic net vs. 2.54 and 2.46 by grouped lasso). It seemed that the advantage of grouped elastic net in the scenario of correlated covariates was subtle in our simulation. More investigation was needed to explain these unexpected results.\\
+
+In case 3, all three methods correctly identified all six relevant blocks and coefficients. However, the chance of selecting the irrelevant blocks and coefficients was also very high by all three models, although lasso had better performance among all the methods.\\
+
+
+\begin{table}
+\centering
+\caption{Average results of simulation study 1}
+\label{table2}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+ & \multicolumn{2}{c}{Block-} & \multicolumn{2}{c}{Coefficient-} \\ \midrule
+ & C & IC & C & IC \\ \midrule
+ & Case 1 &  &  &  \\ \midrule
+Oracle & 3 & 0 & 9 & 0 \\
+$\omega$=0 &  &  &  &  \\
+Lasso & 2.84 & 1.79 & 6.09 & 2.53 \\
+Grouped lasso & 2.86 & 1.7 & 8.58 & 5.1 \\
+Grouped elastic net & 2.86 & 1.7 & 8.58 & 5.1 \\
+$\omega$=0.5 &  &  &  &  \\
+Lasso & 2.77 & 2.24 & 6.22 & 3 \\
+Grouped lasso & 2.83 & 1.94 & 8.49 & 5.82 \\
+Grouped elastic net & 2.83 & 2.02 & 8.49 & 6.06 \\
+ & Case 2 &  &  &  \\ \midrule
+Oracle & 3 & 0 & 9 & 0 \\
+$\omega$=0 &  &  &  &  \\
+Lasso & 2.54 & 2.58 & 4.56 & 4.94 \\
+Grouped lasso & 2.54 & 2.6 & 7.62 & 7.8 \\
+Grouped elastic net & 2.61 & 2.56 & 7.83 & 7.68 \\
+$\omega$=0.5 &  &  &  &  \\
+Lasso & 2.44 & 2.66 & 4.19 & 4.57 \\
+Grouped lasso & 2.46 & 2.66 & 7.38 & 7.98 \\
+Grouped elastic net & 2.5 & 2.62 & 7.5 & 7.86 \\
+ & Case 3 &  &  &  \\ \midrule
+Oracle & 6 & 0 & 6 & 0 \\
+$\omega$=0 &  &  &  &  \\
+Lasso & 6 & 1.78 & 6 & 8.86 \\
+Grouped lasso & 6 & 1.92 & 6 & 17.76 \\
+Grouped elastic net & 6 & 1.92 & 6 & 17.76 \\
+$\omega$=0.5 &  &  &  &  \\
+Lasso & 6 & 1.74 & 6 & 8.92 \\
+Grouped lasso & 6 & 1.97 & 6 & 17.91 \\
+Grouped elastic net & 6 & 1.97 & 6 & 17.91 \\ \bottomrule
+\end{tabular}
+\end{table}
+
+\newpage
+
+\subsection*{\textbf{Results of Simulation Study 2}}
+The results of Simulation 2 are displayed in Table \ref{table3}, showing the bias, standard error (SE) and the root mean squared error (rMSE) of each coefficient by using the three different Tweedie methods, i.e., lasso, grouped lasso, grouped elastic net. Overall, the three different Tweedie methods have very similar performances in terms of bias, SE and rMSE. It is very interesting to observe that all the methods provide unbiased estimates of all the true covariate coefficients $\beta$ except for the covariate vehicle body. Vehicle body is a categorical variable with 13 levels, and the coefficients of its dummy variables are much larger comparing to the other variables. The biases for these dummy variables are high along with relatively large SE and rMSE, while the biases for all the other covariates are negligible with small SE and rMSE.\\
+ 
+
+\begin{sidewaystable}[!htbp]
+\centering
+\caption{Comparison of the three Tweedie Models on parameter estimation}
+\label{table3}
+\resizebox{\textwidth}{!}{\begin{tabular}{@{}lccclccclccc@{}}
+\toprule
+ & \multicolumn{3}{c}{Bias} &  & \multicolumn{3}{c}{SE} &  & \multicolumn{3}{c}{rMSE} \\ \midrule
+ & Lasso & Group Lasso & Group Elastic Net &  & Lasso & Group Lasso & Group Elastic Net &  & Lasso & Group Lasso & Group Elastic Net \\ \midrule
+Vehicle Value & -0.003 & -0.004 & -0.005 &  & 0.013 & 0.013 & 0.013 &  & 0.014 & 0.014 & 0.014 \\
+Vehicle Body &  &  &  &  &  &  &  &  &  &  &  \\
+CONVT & 0.796 & 0.928 & 0.978 &  & 0.585 & 0.504 & 0.477 &  & 0.988 & 1.056 & 1.088 \\
+COUPE & 0.704 & 0.679 & 0.706 &  & 0.311 & 0.286 & 0.268 &  & 0.77 & 0.737 & 0.755 \\
+HBACK & 0.717 & 0.69 & 0.717 &  & 0.302 & 0.274 & 0.253 &  & 0.778 & 0.742 & 0.76 \\
+HDTOP & 0.722 & 0.696 & 0.724 &  & 0.3 & 0.274 & 0.254 &  & 0.782 & 0.748 & 0.767 \\
+MCARA & 0.636 & 0.621 & 0.644 &  & 0.319 & 0.307 & 0.293 &  & 0.711 & 0.693 & 0.707 \\
+MIBUS & 0.721 & 0.692 & 0.72 &  & 0.312 & 0.283 & 0.262 &  & 0.785 & 0.748 & 0.766 \\
+PANVN & 0.711 & 0.684 & 0.712 &  & 0.313 & 0.296 & 0.275 &  & 0.777 & 0.746 & 0.763 \\
+RDSTR & 0.792 & 0.783 & 0.819 &  & 0.495 & 0.369 & 0.347 &  & 0.934 & 0.866 & 0.889 \\
+SEDAN & 0.721 & 0.694 & 0.721 &  & 0.3 & 0.272 & 0.251 &  & 0.781 & 0.745 & 0.764 \\
+STNWG & 0.723 & 0.698 & 0.725 &  & 0.3 & 0.272 & 0.252 &  & 0.783 & 0.749 & 0.768 \\
+TRUCK & 0.728 & 0.7 & 0.727 &  & 0.303 & 0.276 & 0.256 &  & 0.789 & 0.752 & 0.771 \\
+UTE & 0.716 & 0.69 & 0.717 &  & 0.305 & 0.275 & 0.255 &  & 0.779 & 0.743 & 0.761 \\
+Vehicle Age & -0.003 & -0.004 & -0.004 &  & 0.014 & 0.014 & 0.014 &  & 0.015 & 0.015 & 0.015 \\
+Gender & 0.003 & 0.003 & 0.003 &  & 0.022 & 0.022 & 0.022 &  & 0.022 & 0.022 & 0.022 \\
+Area &  &  &  &  &  &  &  &  &  &  &  \\
+B & -0.007 & -0.006 & -0.006 &  & 0.029 & 0.029 & 0.029 &  & 0.03 & 0.03 & 0.03 \\
+C & -0.005 & -0.004 & -0.004 &  & 0.028 & 0.028 & 0.028 &  & 0.028 & 0.028 & 0.028 \\
+D & -0.003 & -0.002 & -0.002 &  & 0.037 & 0.037 & 0.037 &  & 0.037 & 0.037 & 0.037 \\
+E & -0.002 & -0.001 & -0.001 &  & 0.041 & 0.042 & 0.042 &  & 0.041 & 0.042 & 0.042 \\
+F & -0.003 & -0.002 & -0.002 &  & 0.051 & 0.05 & 0.05 &  & 0.051 & 0.05 & 0.05 \\
+Driver's Age &  &  &  &  &  &  &  &  &  &  &  \\
+2 & 0.009 & 0.007 & 0.007 &  & 0.038 & 0.037 & 0.037 &  & 0.039 & 0.038 & 0.038 \\
+3 & 0.005 & 0.004 & 0.004 &  & 0.04 & 0.039 & 0.038 &  & 0.041 & 0.039 & 0.039 \\
+4 & 0.005 & 0.004 & 0.004 &  & 0.04 & 0.039 & 0.038 &  & 0.04 & 0.039 & 0.039 \\
+5 & 0.01 & 0.008 & 0.009 &  & 0.041 & 0.04 & 0.04 &  & 0.042 & 0.041 & 0.041 \\
+6 & 0.006 & 0.005 & 0.005 &  & 0.051 & 0.049 & 0.049 &  & 0.051 & 0.05 & 0.049 \\ \bottomrule
+\end{tabular}}
+\end{sidewaystable}
+
+
+\section*{\textbf{Discussion}}
+In this final project, we aimed to reproduce the proposed models and the simulation studies in the article by Qian, Yang and Zou 2016 [1]. We have successfully developed our own R programs following the algorithms described in the article.\\
+
+The design of the first simulation study follows the three simulation cases provided in the example 1 in the paper. For all the three cases, our results are similar to the results from the original paper in terms of the correctly identified active blocks, incorrectly identified active blocks, and the correctly identified coefficients. However, our simulation showed a higher number of the incorrectly identified coefficient. This is possibly due to the fact that only a small grid of m and $\tau$ were considered in our study, and small $\lambda$ values were more likely to be selected by our cross-validation, therefore more coefficients than needed were incorrectly included by the models. We chose this setting to increase our computational speed within limited time, however the performances of the models have been compromised as we expected. Further simulation with a larger grid of the tuning parameter values is needed to confirm if this non-ideal performance persist using our algorithms.\\
+
+The second simulation study is designed to evaluate the performance of the Tweedie models in analysis that reflects data structure in a real-life study. Based on the car insurance data, we found that the three Tweedie models provided unbiased estimates for the coefficients of almost all the covariates in the true model. It is indicated that the Tweedie model can be used to not only identify relevant predictors, but also estimate the magnitudes of the association of the covariates on the outcome. However, cautions need to be taken when interpreting the results of a categorical variables with many levels.\\
+
+In summary, we have achieved our objective to implement a computational intensive algorithm and conducted a comprehensive simulation study proposed in our chosen article. We also believe that the second simulation proposed by us provides additional contribution and insight about the application of Tweedie models in real-life studies.\\
+\newpage
+\section*{\textbf{References}}
+[1] Qian, W., Yang, Y. and Zou, H.(2016). "Tweedie's Compound Poisson Model with Grouped Elastic Net". \emph{Journal of Computational and Graphical Statistics},25:2, 606-625.\\
+
+[2] Dunn, Peter K., and Maintainer Peter K. Dunn (2013). "Package ‘tweedie’." \emph{R package version 2.7}.\\
+
+[3] Wolny-Dominiak, A, Trzesiok, M. (2015). "Package 'insuranceData'." \emph{R package version 1.0}.\\
+\end{document}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
